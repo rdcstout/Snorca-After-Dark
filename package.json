@@ -80,10 +80,12 @@
       "category": "Utility",
       "icon": "assets/icon.png",
       "executableName": "snorca-after-dark",
-      "artifactName": "Snorca-After-Dark-${version}-linux-${arch}.${ext}"
+      "artifactName": "Snorca-After-Dark-${version}-linux-x64.${ext}",
+      "syncDesktopName": true
     },
     "deb": {
-      "packageName": "snorca-after-dark"
+      "packageName": "snorca-after-dark",
+      "maintainer": "Roger Stout <rogerstout@gmail.com>"
     }
   },
   "engines": {
@@ -99,5 +101,6 @@
   },
   "bugs": {
     "url": "https://github.com/rdcstout/Snorca-After-Dark/issues"
-  }
+  },
+  "desktopName": "snorca-after-dark.desktop"
 }
