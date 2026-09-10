@@ -1,0 +1,88 @@
+{
+  "name": "orca-dark-launcher",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Reversible dark Home and Device pages for Snapmaker Orca",
+  "author": "Roger Stout",
+  "license": "MIT",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.cjs",
+    "package:mac": "electron-builder --mac dmg --arm64",
+    "package:win": "electron-builder --win nsis --x64",
+    "check": "node scripts/check.cjs",
+    "verify:package": "node scripts/verify-package.cjs",
+    "prestart": "install-electron",
+    "prepackage:win": "node scripts/prepare-installer.cjs"
+  },
+  "devDependencies": {
+    "electron": "44.3.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "therapy.extrusion.orca-dark-launcher",
+    "productName": "Snorca After Dark",
+    "directories": {
+      "output": "../../work/release-packages"
+    },
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "engine.cjs",
+      "runtime.cjs",
+      "theme.js",
+      "ui/**/*",
+      "package.json",
+      "updates.cjs",
+      "release-channel.json",
+      "LICENSE"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "identity": "C8745B268B6DDD555155EA2F4D0CED3043BE6E3F",
+      "target": [
+        "dmg"
+      ],
+      "hardenedRuntime": true,
+      "icon": "assets/icon.icns",
+      "sign": "scripts/sign-mac.cjs"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico",
+      "signExecutable": false
+    },
+    "artifactName": "Snorca-After-Dark-${version}-${os}-${arch}.${ext}",
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Snorca After Dark",
+      "artifactName": "Snorca-After-Dark-Setup-${version}-${arch}.${ext}",
+      "include": "build/installer.nsh"
+    },
+    "extraResources": [
+      {
+        "from": "assets/licenses",
+        "to": "licenses"
+      }
+    ]
+  },
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "dependencies": {
+    "semver": "7.8.5"
+  },
+  "homepage": "https://github.com/rdcstout/Snorca-After-Dark",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rdcstout/Snorca-After-Dark.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rdcstout/Snorca-After-Dark/issues"
+  }
+}

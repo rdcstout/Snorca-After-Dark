@@ -1,0 +1,21 @@
+name: Checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - name: Fetch verified vendor test fixture
+        run: python3 scripts/vendor-fixture.py
+      - run: npm test
+        env:
+          ORCA_FIXTURE: /tmp/snorca-vendor-fixture
+      - run: npm audit --omit=dev
