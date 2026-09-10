@@ -4,12 +4,6 @@
 
 Dark Home and Device pages for **Snapmaker Orca**, matched to its native gray palette. Apply once, then close Snorca After Dark—the theme stays in place.
 
-## Linux beta — untested on a Linux desktop
-
-**Volunteer testing build: 0.3.1-beta.1, Linux x86-64 only.** Automated checks use the official Snapmaker Orca 2.3.6 AppImage web files; desktop behavior, Flatpak operation, installation and removal still need tester confirmation.
-
-[Linux beta downloads](https://github.com/rdcstout/Snorca-After-Dark/releases/tag/v0.3.1-beta.1) · [Linux instructions and test checklist](docs/LINUX_BETA.md)
-
 ## Download
 
 - **[Windows x64 installer](https://github.com/rdcstout/Snorca-After-Dark/releases/latest/download/Snorca-After-Dark-Setup-Windows-x64.exe)**
@@ -17,17 +11,22 @@ Dark Home and Device pages for **Snapmaker Orca**, matched to its native gray pa
 
 The Mac release is Developer ID signed and notarized. The Windows installer is unsigned. [Installation, restore, and removal](docs/USAGE.md).
 
+- **[Linux x64 AppImage](https://github.com/rdcstout/Snorca-After-Dark/releases/latest/download/Snorca-After-Dark-Linux-x64.AppImage)**
+- **[Linux Debian/Ubuntu installer](https://github.com/rdcstout/Snorca-After-Dark/releases/latest/download/Snorca-After-Dark-Linux-x64.deb)**
+
+Linux is version **0.3.1**; Mac and Windows retain the tested **0.3.0** packages. [Linux setup and removal](docs/LINUX.md).
+
 ## Use
 
 1. Close Snapmaker Orca.
 2. Open Snorca After Dark. If needed, use **Choose…** to select Orca's installation folder on Windows or its app on Mac.
-3. Click **Apply only**, then open Orca normally. **Apply & open Orca** does both.
+3. Click **Apply only**, then open Orca normally. **Apply & open Orca** does both on Mac/Windows. On Linux, select Orca's configuration folder and click **Apply theme**.
 
 **Restore original** removes the theme. Run the patcher again after reinstalling a compatible Orca version. It does not need to stay running.
 
 ## Compatibility
 
-Verified with Snapmaker Orca **2.3.6**, web **2.3.26 / 20260818172502**, on Windows x64 and Mac Apple silicon. Other builds and independently modified resources are refused until reviewed. The Orca application itself is not modified; changes are limited to its user web resources.
+Verified with Snapmaker Orca **2.3.6**, web **2.3.26 / 20260818172502**, on Windows x64 and Mac Apple silicon, with Linux operation confirmed on Ubuntu. Flatpak runtime and other Linux distributions still need independent confirmation. Other builds and independently modified resources are refused until reviewed. The Orca application itself is not modified; changes are limited to its user web resources.
 
 The app menu includes **Check for Updates** and optional quiet weekly checks. Downloads and installation stay under your control. Local prototype builds without a configured channel require one manual upgrade to this release.
 

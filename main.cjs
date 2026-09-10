@@ -72,7 +72,7 @@ async function state() {
   return stateInFlight;
 }
 async function openOrca() {
-  if (linux) throw Error('Open Snapmaker Orca normally after applying. Linux beta does not launch Orca.');
+  if (linux) throw Error('Open Snapmaker Orca normally after applying. The Linux version does not launch Orca.');
   if (!settings.value.appPath) throw Error('Choose your Snapmaker Orca installation first.');
   await engine.appBundle(settings.value.appPath);
   const isMac = process.platform === 'darwin';
