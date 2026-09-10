@@ -1,6 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const buttons = ['launch','apply','restore','open','choose','diagnostics'];
+let isLinux = false;
 let working = false, initialized = false, refreshing = false, generation = 0;
 function notice(text,error=false) {
   const clean = String(text).replace(/^Error invoking remote method '[^']+': Error: /,'');
@@ -20,13 +21,19 @@ async function refresh() {
   try {
     const s=await window.launcher.state();
     if(current!==generation||working)return;
+    isLinux=s.platform==='linux';
+    if(isLinux){
+      $('launch').hidden=true;$('open').hidden=true;$('autoOpen').closest('label').hidden=true;
+      $('apply').textContent='Apply theme';$('apply').classList.add('primary');
+      $('linuxBeta').hidden=false;
+    }
     $('appPath').textContent=s.appPath||'Select your Snapmaker Orca installation';
     $('badge').textContent=s.problem?'Needs attention':s.current?'Dark theme current':s.patched?'Theme update available':s.appPath?'Ready':'Choose Orca';
-    $('details').textContent=s.version?`Web ${s.version} · Build ${s.build}`:(s.platform==='win32'?'Choose the folder containing snapmaker-orca.exe.':'Choose the installed Snapmaker Orca app.');
+    $('details').textContent=s.version?`Web ${s.version} · Build ${s.build}`:(s.platform==='win32'?'Choose the folder containing snapmaker-orca.exe.':isLinux?'Choose the Snapmaker_Orca configuration folder. Open Orca once first.':'Choose the installed Snapmaker Orca app.');
     $('autoOpen').checked=s.autoOpen;
     $('version').textContent=`Version ${s.appVersion||'0.2.0'}`;
     $('availability').textContent=s.problem || (s.current ? (s.running===true?'Dark theme is applied. Orca is open. You can close Snorca After Dark.':'Dark theme is applied. You can close Snorca After Dark.') : s.running===true?'Orca is open. Close it before applying or restoring.':s.running===null?'Orca process status is unavailable.':!s.appPath?'Choose your Snapmaker Orca installation before applying.':'Orca is closed. The web files are compatible.');
-    if(!initialized)notice(s.current?'The current dark theme is verified.':'Choose Apply & open Orca to use the dark theme.');
+    if(!initialized)notice(s.current?'The current dark theme is verified.':isLinux?'Choose Apply theme, then open Orca normally.':'Choose Apply & open Orca to use the dark theme.');
     if(s.busy) {
       for(const id of buttons)$(id).disabled=true;
       $('autoOpen').disabled=true;
@@ -49,7 +56,7 @@ for(const action of ['launch','apply','restore','open'])$(action).addEventListen
 },action==='restore'?'Verifying the backup and restoring original files…':action==='open'?'Requesting Orca launch…':'Verifying web files, saving a backup, and applying the theme…'));
 $('choose').addEventListener('click',()=>run(async()=>{
   const result=await window.launcher.choose();
-  notice(result.canceled?'Selection canceled.':result.problem||'Installation selected. Click Apply & open Orca.',!!result.problem);
+  notice(result.canceled?'Selection canceled.':result.problem||(isLinux?'Configuration folder selected. Click Apply theme.':'Installation selected. Click Apply & open Orca.'),!!result.problem);
 },'Choose your Snapmaker Orca installation…'));
 $('autoOpen').addEventListener('change',()=>run(async()=>{
   const result=await window.launcher.autoOpen($('autoOpen').checked);

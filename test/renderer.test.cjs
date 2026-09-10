@@ -1,7 +1,7 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const vm=require('node:vm');const fs=require('node:fs');const path=require('node:path');
 const code=fs.readFileSync(path.join(__dirname,'../ui/renderer.js'),'utf8');
 async function setup(overrides={}){
- const elements=new Map();const get=id=>{if(!elements.has(id))elements.set(id,{textContent:'',disabled:false,classList:{toggle(){}},addEventListener(type,fn){this[type]=fn;}});return elements.get(id);};
+ const elements=new Map();const get=id=>{if(!elements.has(id))elements.set(id,{textContent:'',disabled:false,classList:{toggle(){},add(){}},closest(){return get(id+"-label");},addEventListener(type,fn){this[type]=fn;}});return elements.get(id);};
  const calls=[];const launcher={state:async()=>({appPath:'C:\\Program Files\\Snapmaker Orca\\Snapmaker_Orca.exe',running:true,autoOpen:false}),action:async a=>{calls.push(a);throw Error('Quit Snapmaker Orca first, then try again.');},choose:async()=>({canceled:false}),onNotice(){},...overrides};
  vm.runInNewContext(code,{document:{getElementById:get},window:{launcher},setInterval(){}});await new Promise(resolve=>setImmediate(resolve));return{get,calls};
 }
@@ -13,3 +13,9 @@ test('Apply stays clickable when detection has not found an installation',async(
 
 test('verified theme stays successful after Apply opens Orca',async()=>{let current=false,running=false;const {get}=await setup({state:async()=>({appPath:'/Orca.app',current,running}),action:async()=>{current=true;running=true;return{message:'Dark mode applied. Orca launch requested.'};}});await get('launch').click();await new Promise(resolve=>setImmediate(resolve));assert.match(get('availability').textContent,/Dark theme is applied/);assert.match(get('availability').textContent,/You can close Snorca After Dark/);assert.doesNotMatch(get('availability').textContent,/before applying/);assert.match(get('status').textContent,/Dark mode applied/);});
 test('compatibility problems take precedence over a current marker',async()=>{const {get}=await setup({state:async()=>({appPath:'/Orca.app',current:true,running:true,problem:'Resources changed. Inspect before applying.'})});assert.match(get('availability').textContent,/Resources changed/);});
+
+test('Linux exposes apply and restore and labels desktop testing honestly',async()=>{
+ const {get}=await setup({state:async()=>({platform:'linux',appPath:'/home/test/.config/Snapmaker_Orca',running:false})});
+ assert.equal(get('launch').hidden,true);assert.equal(get('open').hidden,true);assert.equal(get('autoOpen-label').hidden,true);
+ assert.equal(get('apply').textContent,'Apply theme');assert.equal(get('linuxBeta').hidden,false);assert.match(get('status').textContent,/Apply theme/);
+});

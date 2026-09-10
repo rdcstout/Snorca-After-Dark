@@ -8,3 +8,10 @@ function setup(fetcher){const settings={value:{automaticUpdates:true,lastUpdateA
 test('weekly checks persist attempts, stay quiet for repeated offers, and allow manual checks',async()=>{let calls=0;const a=setup(async()=>{calls++;return{ok:true,text:async()=>JSON.stringify([release('1.10.0')])};});assert.equal((await a.service.check()).status,'available');assert.equal(await a.service.check(),null);a.advance();assert.equal(await a.service.check(),null);assert.equal((await a.service.check(true)).status,'available');assert.equal(calls,3);const reopened=new Updates({settings:a.settings,config,current:config.current,platform:'win32',arch:'x64',now:()=>a.settings.value.lastUpdateAttempt+1,fetcher:()=>{throw Error('must not fetch');}});assert.equal(await reopened.check(),null);});
 test('disabled automatic checks keep manual checks available and errors are not up-to-date',async()=>{const a=setup(async()=>{throw Error('offline');});a.settings.value.automaticUpdates=false;assert.equal(await a.service.check(),null);assert.equal((await a.service.check(true)).status,'error');});
 test('no publication channel is reported honestly and never contacts a server',async()=>{const a=setup(()=>{throw Error('must not fetch');});a.service.config={repository:null};assert.equal(await a.service.check(),null);assert.equal((await a.service.check(true)).status,'unconfigured');});
+
+test('Linux beta channel finds only compatible Linux packages and compares prereleases',()=>{
+ const r={tag_name:'v0.3.1-beta.2',prerelease:true,assets:[{name:'Snorca-After-Dark-0.3.1-beta.2-linux-x64.AppImage',browser_download_url:'https://github.com/example/snorca/releases/download/v0.3.1-beta.2/app.AppImage'}]};
+ const c={...config,platform:'linux',current:'0.3.1-beta.1',channel:'beta'};
+ assert.equal(eligibleRelease([r],c).status,'available');assert.equal(eligibleRelease([r],{...c,channel:'stable'}).status,'unavailable');
+ assert.equal(eligibleRelease([r],{...c,arch:'arm64'}).status,'unavailable');assert.equal(eligibleRelease([r],{...c,current:'0.3.1-beta.2'}).status,'current');
+});

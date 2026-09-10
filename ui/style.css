@@ -4,3 +4,5 @@
 
 @media(max-width:680px){main{padding:24px}.brand{font-size:44px}h1{font-size:28px}.actions{flex-wrap:wrap}.primary{flex-basis:100%}.install{flex-wrap:wrap}}
 .mini-sidebar,.mini-panels div{background:#2d2d31}.mini-panels i{background:#36363c}.fine{color:#b3b3b5}
+
+[hidden] { display: none !important; }

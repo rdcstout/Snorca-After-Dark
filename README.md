@@ -4,6 +4,12 @@
 
 Dark Home and Device pages for **Snapmaker Orca**, matched to its native gray palette. Apply once, then close Snorca After Dark—the theme stays in place.
 
+## Linux beta — untested on a Linux desktop
+
+**Volunteer testing build: 0.3.1-beta.1, Linux x86-64 only.** Automated checks use the official Snapmaker Orca 2.3.6 AppImage web files; desktop behavior, Flatpak operation, installation and removal still need tester confirmation.
+
+[Linux beta downloads](https://github.com/rdcstout/Snorca-After-Dark/releases/tag/v0.3.1-beta.1) · [Linux instructions and test checklist](docs/LINUX_BETA.md)
+
 ## Download
 
 - **[Windows x64 installer](https://github.com/rdcstout/Snorca-After-Dark/releases/latest/download/Snorca-After-Dark-Setup-Windows-x64.exe)**

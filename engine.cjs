@@ -73,6 +73,7 @@ async function appBundle(appPath, platform=process.platform) {
  if(!await exists(appPath))throw Error('The selected Snapmaker Orca installation is missing. Choose its current location.');
  if(platform==='darwin' && !await exists(path.join(appPath,'Contents','MacOS','Snapmaker_Orca')))throw Error('Select the installed Snapmaker Orca application.');
  if(platform==='win32' && (!/\.exe$/i.test(appPath)||!(await fs.stat(appPath)).isFile()))throw Error('Choose the application EXE inside your installed Snapmaker Orca folder.');
+ if(platform==='linux')return require('./linux.cjs').webResources(appPath);
  const root=platform==='darwin'?path.join(appPath,'Contents','Resources'):path.dirname(appPath);
  for(const p of [path.join(root,'web','flutter_web'),path.join(root,'resources','web','flutter_web'),path.join(root,'Resources','web','flutter_web')]) if(await exists(path.join(p,'version.json')) && await exists(path.join(p,'main.dart.js')) && await exists(path.join(p,'index.html'))) return p;
  throw Error('The selected application has no Orca web resources beside it. Choose the installed application, not its downloaded installer.');
@@ -95,6 +96,7 @@ function matchesWindowsProcess(stdout, executable='') {
 }
 async function isRunning(platform=process.platform, executable='') {
  const {stdout}=platform==='win32'?await run('tasklist',['/FO','CSV','/NH'],{windowsHide:true,timeout:10000}):await run('/bin/ps',['-axo','comm='],{timeout:10000});
+ if(platform==='linux')return require('./linux.cjs').matchesProcess(stdout);
  return platform==='win32'?matchesWindowsProcess(stdout,executable):stdout.split('\n').some(x=>['Snapmaker_Orca','Snapmaker Orca'].includes(path.basename(x.trim())));
 }
 async function ensureStopped(check) {if(await check())throw Error('Quit Snapmaker Orca first, then try again. The launcher never closes a print session for you.');}
@@ -216,4 +218,4 @@ async function restore({target,store,check=isRunning}) {
  const result=await transaction(target,target,store,async stage=>{for(const f of FILES)await fs.writeFile(path.join(stage,f),original[f]);await fs.unlink(path.join(stage,MARKER));},check,expectedSource);
  return {message:'Original web files restored. Open Orca normally.'+(result.cleanupPending?' Cleanup will finish on the next run.':'')};
 }
-module.exports={inspect,WINDOWS_KNOWN,isKnown,treeDigest,transaction,executableInFolder,matchesWindowsProcess,apply,restore,appBundle,isRunning,version,exists,patch,hash,KNOWN,FILES,MARKER};
+module.exports={recover,inspect,WINDOWS_KNOWN,isKnown,treeDigest,transaction,executableInFolder,matchesWindowsProcess,apply,restore,appBundle,isRunning,version,exists,patch,hash,KNOWN,FILES,MARKER};

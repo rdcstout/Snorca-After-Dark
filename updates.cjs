@@ -4,7 +4,7 @@ const WEEK=7*24*60*60*1000;
 function eligibleRelease(releases,{repository,current,platform,arch,channel='stable'}) {
  if(!semver.valid(current))throw Error('The installed version cannot be compared.');
  if(!Array.isArray(releases))throw Error('The update service returned invalid data.');
- const suffix=platform==='win32'?`${arch}.exe`:platform==='darwin'?`mac-${arch}.dmg`:null;
+ const suffix=platform==='win32'?`${arch}.exe`:platform==='darwin'?`mac-${arch}.dmg`:platform==='linux'?`linux-${arch}.AppImage`:null;
  if(!suffix)throw Error('No update package is configured for this platform.');
  const candidates=[];
  for(const release of releases){
