@@ -6,6 +6,7 @@ const {execFile} = require('node:child_process');
 const {promisify} = require('node:util');
 const run = promisify(execFile);
 const hash = data => crypto.createHash('sha256').update(data).digest('hex');
+const V240=require('./web240.cjs');
 const ICONS=['assets/assets/svgs/device/keyboardArrowDropDown.svg','assets/assets/svgs/device/pause.svg'];
 const FILES = ['index.html','main.dart.js','flutter_bootstrap.js',...ICONS];
 const KNOWN = {
@@ -22,7 +23,7 @@ const WINDOWS_KNOWN = {
  'assets/assets/svgs/device/pause.svg':'c5401c0f93f86ee0976b92a14e74bd2897b3478bd138b6af761e6d56e89e7402',
  'assets/assets/svgs/device/keyboardArrowDropDown.svg':'399efeb691563706d53d2edf14b5b6348255ac63814814d789781961b47ee5a9'
 };
-const isKnown = (file, bytes) => [KNOWN[file], WINDOWS_KNOWN[file]].includes(hash(bytes));
+const isKnown = (file, bytes) => [KNOWN[file], WINDOWS_KNOWN[file], V240.KNOWN[file], V240.WINDOWS_KNOWN[file]].includes(hash(bytes));
 const MARKER = '.orca-dark-launcher.json';
 const OLD = 'case 0:q.a=q.b=!1\nA.GP("[ThemeVM] toggleTheme, isDark: false, isSystemTheme: false")';
 const NEW = 'case 0:q.a=!1;q.b=(["0","2"].includes(new URLSearchParams(window.location.search).get("path")))\nA.GP("[ThemeVM] Orca Dark Launcher")';
@@ -34,8 +35,10 @@ async function version(dir) {
  if(!/^\d+$/.test(String(v.build_number)) || typeof v.version!=='string') throw Error('Unrecognized Orca web version. Nothing changed.');
  return v;
 }
-async function readFiles(dir) {await safeDir(dir);const out={}; for(const f of FILES) {const p=path.join(dir,f);const s=await fs.lstat(p);if(!s.isFile()||s.isSymbolicLink())throw Error('Unexpected web file: '+f);out[f]=await fs.readFile(p);} return out;}
+async function fileList(dir) {return await exists(path.join(dir,V240.main))?V240.FILES:FILES;}
+async function readFiles(dir) {await safeDir(dir);const out={}; for(const f of await fileList(dir)) {const p=path.join(dir,f);const s=await fs.lstat(p);if(!s.isFile()||s.isSymbolicLink())throw Error('Unexpected web file: '+f);out[f]=await fs.readFile(p);} return out;}
 function patch(original, theme) {
+ if(original[V240.main])return V240.patch(original,theme,hash);
  for(const f of FILES) if(!isKnown(f,original[f])) throw Error('This Orca web build is not supported yet (or its files were edited). Nothing changed.');
  let main=original['main.dart.js'].toString().replace(/\r\n/g,'\n');
  if(main.split(OLD).length!==2) throw Error('Theme hook does not match. Nothing changed.');
@@ -75,7 +78,7 @@ async function appBundle(appPath, platform=process.platform) {
  if(platform==='win32' && (!/\.exe$/i.test(appPath)||!(await fs.stat(appPath)).isFile()))throw Error('Choose the application EXE inside your installed Snapmaker Orca folder.');
  if(platform==='linux')return require('./linux.cjs').webResources(appPath);
  const root=platform==='darwin'?path.join(appPath,'Contents','Resources'):path.dirname(appPath);
- for(const p of [path.join(root,'web','flutter_web'),path.join(root,'resources','web','flutter_web'),path.join(root,'Resources','web','flutter_web')]) if(await exists(path.join(p,'version.json')) && await exists(path.join(p,'main.dart.js')) && await exists(path.join(p,'index.html'))) return p;
+ for(const p of [path.join(root,'web','flutter_web'),path.join(root,'resources','web','flutter_web'),path.join(root,'Resources','web','flutter_web')]) if(await exists(path.join(p,'version.json')) && (await exists(path.join(p,'main.dart.js'))||await exists(path.join(p,V240.main))) && await exists(path.join(p,'index.html'))) return p;
  throw Error('The selected application has no Orca web resources beside it. Choose the installed application, not its downloaded installer.');
 }
 async function executableInFolder(folder) {
@@ -155,15 +158,15 @@ async function transaction(source,target,store,edit,check,expectedSource) {
  return {cleanupPending:false};
 }
 async function backup(dir,store,files,v) {
- const id=hash(JSON.stringify(v)+FILES.map(f=>hash(files[f])).join(''));
+ const id=hash(JSON.stringify(v)+Object.keys(files).map(f=>hash(files[f])).join(''));
  const dest=path.join(store,'backups',id);
  if(await exists(dest)) {
   const saved=await readFiles(dest);
-  if(FILES.some(f=>hash(saved[f])!==hash(files[f])))throw Error('The existing restore backup is damaged. Nothing changed. Inspect the backup folder before trying again.');
+  if(Object.keys(files).some(f=>hash(saved[f])!==hash(files[f])))throw Error('The existing restore backup is damaged. Nothing changed. Inspect the backup folder before trying again.');
  }
  if(!await exists(dest)) {
   await fs.mkdir(path.dirname(dest),{recursive:true});const temp=dest+'.'+crypto.randomUUID();await fs.mkdir(temp,{mode:0o700});
-  for(const f of FILES){await fs.mkdir(path.dirname(path.join(temp,f)),{recursive:true});await fs.writeFile(path.join(temp,f),files[f]);}
+  for(const f of Object.keys(files)){await fs.mkdir(path.dirname(path.join(temp,f)),{recursive:true});await fs.writeFile(path.join(temp,f),files[f]);}
   await fs.writeFile(path.join(temp,'version.json'),JSON.stringify(v));
   await fs.rename(temp,dest);
  }
@@ -174,12 +177,12 @@ async function originals(source,store) {
  if(!await exists(path.join(source,MARKER)))return files;
  const m=await json(path.join(source,MARKER));
  if(!/^[a-f0-9]{64}$/.test(m.backup))throw Error('Invalid restore record. Nothing changed.');
- for(const f of FILES) if(m.patched?.[f]?hash(files[f])!==m.patched[f]:!isKnown(f,files[f]))throw Error('Orca web files changed after applying the theme. Nothing changed; inspect before restoring.');
+ for(const f of Object.keys(files)) if(m.patched?.[f]?hash(files[f])!==m.patched[f]:!isKnown(f,files[f]))throw Error('Orca web files changed after applying the theme. Nothing changed; inspect before restoring.');
  const actualVersion=await version(source);
  if(JSON.stringify(actualVersion)!==JSON.stringify(m.version))throw Error('Orca web version changed after applying the theme. Nothing changed.');
  const original={};
- for(const f of FILES){const saved=path.join(store,'backups',m.backup,f);if(await exists(saved))original[f]=await fs.readFile(saved);else if(!m.patched?.[f]&&isKnown(f,files[f]))original[f]=files[f];else throw Error('Restore backup is incomplete. Nothing changed.');}
- for(const f of FILES)if(!isKnown(f,original[f]))throw Error('Restore backup failed verification. Nothing changed.');
+ for(const f of Object.keys(files)){const saved=path.join(store,'backups',m.backup,f);if(await exists(saved))original[f]=await fs.readFile(saved);else if(!m.patched?.[f]&&isKnown(f,files[f]))original[f]=files[f];else throw Error('Restore backup is incomplete. Nothing changed.');}
+ for(const f of Object.keys(files))if(!isKnown(f,original[f]))throw Error('Restore backup failed verification. Nothing changed.');
  return original;
 }
 async function inspect({bundle,target,store,theme}) {
@@ -190,7 +193,7 @@ async function inspect({bundle,target,store,theme}) {
  const expected=patch(original,theme);
  const installed=source===target&&await exists(path.join(target,MARKER));
  const current=installed?await readFiles(target):null;
- return {version:selected.version,build:selected.build_number,compatible:true,patched:!!installed,current:!!current&&FILES.every(f=>hash(current[f])===hash(expected[f]))};
+ return {version:selected.version,build:selected.build_number,compatible:true,patched:!!installed,current:!!current&&Object.keys(expected).every(f=>hash(current[f])===hash(expected[f]))};
 }
 async function apply({bundle,target,store,theme,check=isRunning}) {
  await ensureStopped(check);await fs.mkdir(store,{recursive:true,mode:0o700});await recover(store,target);
@@ -202,11 +205,11 @@ async function apply({bundle,target,store,theme,check=isRunning}) {
  const id=await backup(source,store,original,v);
  if(source===target && await exists(path.join(target,MARKER))) {
   const current=await readFiles(target);
-  if(FILES.every(f=>hash(current[f])===hash(patched[f])))return {message:'Dark mode is already applied.',version:v.version};
+  if(Object.keys(patched).every(f=>hash(current[f])===hash(patched[f])))return {message:'Dark mode is already applied.',version:v.version};
  }
  const result=await transaction(source,target,store,async stage=>{
-  for(const f of FILES)await fs.writeFile(path.join(stage,f),patched[f]);
-  await fs.writeFile(path.join(stage,MARKER),JSON.stringify({schema:1,backup:id,version:v,patched:Object.fromEntries(FILES.map(f=>[f,hash(patched[f])]))}));
+  for(const f of Object.keys(patched))await fs.writeFile(path.join(stage,f),patched[f]);
+  await fs.writeFile(path.join(stage,MARKER),JSON.stringify({schema:1,backup:id,version:v,patched:Object.fromEntries(Object.keys(patched).map(f=>[f,hash(patched[f])]))}));
  },check,expectedSource);
  return {message:'Dark mode applied. Open Orca to use it.'+(result.cleanupPending?' Cleanup will finish on the next run.':''),version:v.version};
 }
@@ -215,7 +218,7 @@ async function restore({target,store,check=isRunning}) {
  if(!await exists(path.join(target,MARKER)))return {message:'No launcher patch is installed. Current Orca files were kept.'};
  const expectedSource=await treeDigest(target);
  const original=await originals(target,store);
- const result=await transaction(target,target,store,async stage=>{for(const f of FILES)await fs.writeFile(path.join(stage,f),original[f]);await fs.unlink(path.join(stage,MARKER));},check,expectedSource);
+ const result=await transaction(target,target,store,async stage=>{for(const f of Object.keys(original))await fs.writeFile(path.join(stage,f),original[f]);await fs.unlink(path.join(stage,MARKER));},check,expectedSource);
  return {message:'Original web files restored. Open Orca normally.'+(result.cleanupPending?' Cleanup will finish on the next run.':'')};
 }
 module.exports={recover,inspect,WINDOWS_KNOWN,isKnown,treeDigest,transaction,executableInFolder,matchesWindowsProcess,apply,restore,appBundle,isRunning,version,exists,patch,hash,KNOWN,FILES,MARKER};

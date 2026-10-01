@@ -11,7 +11,8 @@ async function webResources(folder) {
  const target=path.join(web,'flutter_web');
  const info=await fs.lstat(target).catch(()=>null);
  if(!info?.isDirectory()||info.isSymbolicLink())throw Error('No initialized Orca web interface found. Open Orca once and close it before applying.');
- for(const file of ['version.json','main.dart.js','index.html']) {
+ const main=await fs.access(path.join(target,require('./web240.cjs').main)).then(()=>require('./web240.cjs').main,()=> 'main.dart.js');
+ for(const file of ['version.json',main,'index.html']) {
   const entry=await fs.lstat(path.join(target,file)).catch(()=>null);
   if(!entry?.isFile()||entry.isSymbolicLink())throw Error('The selected folder does not contain ordinary Orca web resources. Nothing changed.');
  }

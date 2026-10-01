@@ -15,7 +15,9 @@ jobs:
       - run: npm run check
       - name: Fetch verified vendor test fixture
         run: python3 scripts/vendor-fixture.py
+      - run: python3 scripts/vendor240-fixture.py windows
       - run: npm test
         env:
           ORCA_FIXTURE: /tmp/snorca-vendor-fixture
+          ORCA_240_FIXTURE: /tmp/snorca-240-windows
       - run: npm audit --omit=dev

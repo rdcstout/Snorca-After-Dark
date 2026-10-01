@@ -21,9 +21,11 @@ jobs:
           python3 -m venv /tmp/fixture-tools
           /tmp/fixture-tools/bin/pip install dissect.squashfs==1.10 zstandard==0.25.0
           /tmp/fixture-tools/bin/python scripts/linux-fixture.py
+          /tmp/fixture-tools/bin/python scripts/vendor240-fixture.py linux
       - run: npm test
         env:
           ORCA_FIXTURE: /tmp/snorca-linux-fixture
+          ORCA_240_FIXTURE: /tmp/snorca-240-linux
       - run: npm audit --omit=dev
       - name: Package Linux x64
         run: npm run package:linux -- --publish never --config.directories.output=dist-linux
@@ -31,8 +33,9 @@ jobs:
       - name: Verify Debian metadata and create stable copies
         run: |
           dpkg-deb --info dist-linux/*.deb
-          cp dist-linux/Snorca-After-Dark-0.3.1-linux-x64.AppImage dist-linux/Snorca-After-Dark-Linux-x64.AppImage
-          cp dist-linux/Snorca-After-Dark-0.3.1-linux-x64.deb dist-linux/Snorca-After-Dark-Linux-x64.deb
+          version=$(node -p "require('./package.json').version")
+          cp dist-linux/Snorca-After-Dark-${version}-linux-x64.AppImage dist-linux/Snorca-After-Dark-Linux-x64.AppImage
+          cp dist-linux/Snorca-After-Dark-${version}-linux-x64.deb dist-linux/Snorca-After-Dark-Linux-x64.deb
           cd dist-linux
           sha256sum *.AppImage *.deb > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4

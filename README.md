@@ -14,7 +14,7 @@ The Mac release is Developer ID signed and notarized. The Windows installer is u
 - **[Linux x64 AppImage](https://github.com/rdcstout/Snorca-After-Dark/releases/latest/download/Snorca-After-Dark-Linux-x64.AppImage)**
 - **[Linux Debian/Ubuntu installer](https://github.com/rdcstout/Snorca-After-Dark/releases/latest/download/Snorca-After-Dark-Linux-x64.deb)**
 
-Linux is version **0.3.1**; Mac and Windows retain the tested **0.3.0** packages. [Linux setup and removal](docs/LINUX.md).
+Version **0.3.2** is available for all three platforms. [Linux setup and removal](docs/LINUX.md).
 
 ## Use
 
@@ -26,7 +26,7 @@ Linux is version **0.3.1**; Mac and Windows retain the tested **0.3.0** packages
 
 ## Compatibility
 
-Verified with Snapmaker Orca **2.3.6**, web **2.3.26 / 20260818172502**, on Windows x64 and Mac Apple silicon, with Linux operation confirmed on Ubuntu. Flatpak runtime and other Linux distributions still need independent confirmation. Other builds and independently modified resources are refused until reviewed. The Orca application itself is not modified; changes are limited to its user web resources.
+Supports Snapmaker Orca **2.3.6** (web **2.3.26 / 20260818172502**) and **2.4.0** (web **2.3.38 / 20260915154633**). Apply/restore checks pass against the official Windows, Mac, and Linux AppImage resources. The new 2.4.0 appearance is confirmed on Mac; Windows and Ubuntu were previously confirmed with 2.3.6. Hands-on 2.4.0 Windows/Linux testing, Flatpak runtime, and other Linux distributions remain unverified. Other builds and independently modified resources are refused until reviewed. The Orca application itself is not modified; changes are limited to its user web resources.
 
 The app menu includes **Check for Updates** and optional quiet weekly checks. Downloads and installation stay under your control. Local prototype builds without a configured channel require one manual upgrade to this release.
 

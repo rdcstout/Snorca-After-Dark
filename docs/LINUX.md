@@ -1,6 +1,6 @@
-# Linux 0.3.1
+# Linux
 
-Linux operation has been confirmed by Roger on Ubuntu. Automated apply/restore and package checks also pass. This does not establish compatibility with every distribution or independent Flatpak runtime validation. Mac and Windows retain their tested 0.3.0 packages.
+Linux operation has been confirmed by Roger on Ubuntu. Automated apply/restore and package checks also pass. This does not establish compatibility with every distribution or independent Flatpak runtime validation. Version 0.3.2 adds verified 2.4.0 resource support; hands-on testing of the new Orca release on Linux remains outstanding.
 
 ## Download and install
 
@@ -9,11 +9,11 @@ Linux x86-64 only. [Download the current release](https://github.com/rdcstout/Sn
 - **AppImage:** download `Snorca-After-Dark-Linux-x64.AppImage`, mark it executable in your file manager, and open it. Alternatively: `chmod +x Snorca-After-Dark-Linux-x64.AppImage` then `./Snorca-After-Dark-Linux-x64.AppImage`.
 - **Debian/Ubuntu installer:** download `Snorca-After-Dark-Linux-x64.deb` and install it with your package manager, or `sudo apt install ./Snorca-After-Dark-Linux-x64.deb`. Open **Snorca After Dark** from the applications menu.
 
-Do not run the application as root or disable the Electron sandbox to work around a launch error. Report the error and distro/version instead. The AppImage may require your distro's FUSE support; the Debian package provides an alternative on Debian/Ubuntu.
+Do not run the application as root or disable the Electron sandbox to work around a launch error. Report the error and distro/version instead. Version 0.3.2 removes the packager's automatic sandbox-disabling fallback. On systems restricting user namespaces, prefer the Debian package rather than adding `--no-sandbox`. The AppImage may require your distro's FUSE support; the Debian package provides an alternative on Debian/Ubuntu.
 
 ## Apply and restore
 
-1. Open Snapmaker Orca 2.3.6 once so it creates its web files, then close it.
+1. Open Snapmaker Orca 2.3.6 or 2.4.0 once so it creates its web files, then close it.
 2. Open Snorca After Dark. It looks for the normal and Flatpak configuration folders. If both exist, choose the one belonging to the installation you use.
 3. If needed, click **Choose…** and select the **configuration folder**, not the AppImage or EXE:
    - AppImage: `~/.config/Snapmaker_Orca` (or `$XDG_CONFIG_HOME/Snapmaker_Orca`).
@@ -22,7 +22,7 @@ Do not run the application as root or disable the Electron sandbox to work aroun
 4. Click **Apply theme**, then open Orca normally. The Linux version does not launch Orca for you.
 5. To undo it, close Orca and click **Restore original**.
 
-The theme is limited to verified web 2.3.26 / 20260818172502 files. Those files from the official Linux AppImage match the supported hashes. Flatpak path handling is implemented, but its package and runtime have not been independently verified. Unrecognized or modified web files are refused without applying a patch.
+The theme is limited to verified web 2.3.26 / 20260818172502 and 2.3.38 / 20260915154633 files. Those files from the official Linux AppImage match the supported hashes. Flatpak path handling is implemented, but its package and runtime have not been independently verified. Unrecognized or modified web files are refused without applying a patch.
 
 ## Remove the application
 
