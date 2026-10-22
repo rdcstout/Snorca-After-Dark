@@ -17,6 +17,21 @@ test('Orca 2.4.0 hashed resources apply, reapply, refuse edits and restore exact
  const placeholder={aV:{__snorcaPlaceholder:true}},ordinary={aV:{}};
  render.call(placeholder);render.call(ordinary);
  assert.equal(placeholder.aC.mode,'exclusion');assert.equal(ordinary.aC.mode,'srcIn');
+ // Execute the patched homing widget with a disabled/enabled callback and both themes.
+ // Never execute its printer callback: assert its identity is passed through unchanged.
+ const home=patchedMain.match(/aR4\(a\)\{[\s\S]*?\},\naFx/)[0].replace(/,\naFx$/, '');
+ for(const dark of [false,true])for(const disabled of [false,true]){
+  const callback=function HomeCallback(owner){this.owner=owner;},themeColor={vendor:true};
+  const api={u:()=>({ax:{c:themeColor}}),bhG:callback,V:function(...channels){this.channels=channels;},
+   bGQ:(...args)=>args,bA:()=>null,c:x=>x,aH:x=>x};
+  const build=new Function('A','B','t','window','return ({'+home+'}).aR4')(api,{adJ:'home'}, {},{__orcaDarkActive:dark});
+  const owner={c:{},aFM:()=>null},button=build.call(owner,disabled)[0];
+  assert.equal(button[3],'home');
+  assert.equal(button[0],8);assert.equal(button[2],40);assert.equal(button[4],20);assert.equal(button[6],56);
+  if(dark)assert.deepEqual(button[1].channels.slice(0,4),[1,62/255,62/255,69/255]);
+  else assert.equal(button[1],themeColor);
+  if(disabled)assert.equal(button[5],null);else assert.equal(button[5].owner,owner);
+ }
  const before=await E.treeDigest(bundle);
  assert.equal((await E.inspect(a)).version,'2.3.38');await E.apply(a);
  assert.equal((await E.inspect(a)).current,true);assert.match((await E.apply(a)).message,/already/);

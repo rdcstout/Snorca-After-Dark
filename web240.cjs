@@ -31,6 +31,8 @@ module.exports.patch=function(original,theme,hash){
  scoped('A.ME.prototype={','A.aBa.prototype=', 'A.u(a).ax.c',`(window.__orcaDarkActive?${color(62,62,69)}:A.u(a).ax.c)`);
  scoped('A.Wh.prototype={','A.bb6.prototype=', 'new A.aL(B.B1,',`new A.aL(window.__orcaDarkActive?${color(62,62,69)}:B.B1,`);
  scoped('A.bkn.prototype={','A.bkm.prototype=', 'new A.aL(B.v,q,q,n,q,q,q,B.D)',`new A.aL(window.__orcaDarkActive?${color(45,45,49)}:B.v,q,q,n,q,q,q,B.D)`);
+ // The homing control has its own background argument, outside the movement controls.
+ once('A.bGQ(8,r.ax.c,40,B.adJ,20,s,56)',`A.bGQ(8,window.__orcaDarkActive?${color(62,62,69)}:r.ax.c,40,B.adJ,20,s,56)`);
  // Flutter 3.41 represents Color as normalized floating-point channels.
  for(const [name,old,r,g,b] of [
   ['B.ob','new A.V(1,0.09411764705882353,0.09411764705882353,0.10588235294117647,B.n)',45,45,49],

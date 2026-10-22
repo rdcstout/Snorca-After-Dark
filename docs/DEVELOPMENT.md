@@ -33,3 +33,9 @@ Official Windows and Linux AppImage 2.4.0 resources are also verified. Windows d
 The Linux packaging preparation removes electron-builder 26.15.3's automatic `--no-sandbox` fallback and supplies an empty desktop argument list. Template drift fails the build. Systems that restrict unprivileged namespaces should use the Debian package with its app-specific profile.
 
 Active-print status and hands-on 2.4.0 Windows/Linux appearance have not been tested in this session.
+
+## Homing button correction — 0.3.3
+
+The Orca 2.4.0 homing control passes its background separately from the movement controls. The verified compiled hook now uses #3E3E45 while dark mode is active. The vendor light color, icon, layout, callback, and disabled state are preserved. The hash guard and existing apply/restore paths remain unchanged.
+
+All 47 tests pass against both official Windows and Linux 2.4.0 fixtures, together with the legacy 2.3.6 fixture. The homing regression executes the patched widget constructor with both theme states and enabled/disabled states without invoking printer commands. Syntax and whitespace checks pass. Runtime dependency audit is clean; the existing ten build-tool dependency advisories remain unchanged. The focused adversarial review covered hook uniqueness, cache invalidation, existing-patch replacement, and restoration. No printer motion was issued. Connected-printer visual confirmation of this correction remains pending.
