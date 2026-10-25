@@ -39,3 +39,7 @@ Created by [Extrusion Therapy](https://extrusiontherapy.com). This is an indepen
 ## Support Future Tools
 
 Snorca After Dark is free. You can optionally [support future Extrusion Therapy tools](https://buy.stripe.com/fZu3cw2Mnfr0d7N3ws1kA00). Downloads are never gated behind payment.
+
+## Contribution and security policies
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for changes and validation, and [SECURITY.md](SECURITY.md) for reporting suspected vulnerabilities.
