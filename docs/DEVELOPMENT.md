@@ -39,3 +39,9 @@ Active-print status and hands-on 2.4.0 Windows/Linux appearance have not been te
 The Orca 2.4.0 homing control passes its background separately from the movement controls. The verified compiled hook now uses #3E3E45 while dark mode is active. The vendor light color, icon, layout, callback, and disabled state are preserved. The hash guard and existing apply/restore paths remain unchanged.
 
 All 47 tests pass against both official Windows and Linux 2.4.0 fixtures, together with the legacy 2.3.6 fixture. The homing regression executes the patched widget constructor with both theme states and enabled/disabled states without invoking printer commands. Syntax and whitespace checks pass. Runtime dependency audit is clean; the existing ten build-tool dependency advisories remain unchanged. The focused adversarial review covered hook uniqueness, cache invalidation, existing-patch replacement, and restoration. No printer motion was issued. Roger confirmed the patched homing button on the local Mac after installing 0.3.3 and applying over the existing theme on 2026-10-22. The packaged app reported Theme update available before applying and Dark theme current afterward. Windows/Linux visual retesting remains unverified.
+
+## Electron update — 0.3.4
+
+PR #4 updates Electron 44.3.0 to 44.9.1. Bundled notices were copied byte-for-byte from the official 44.9.1 distribution, retaining upstream whitespace. No theme, IPC, settings, or installer behavior was changed. The app remains sandboxed with context isolation and no renderer Node integration.
+
+All 47 tests pass under Node 24 and Electron 44.9.1's runtime using official old/new Orca fixtures. Both PR checks passed before merging. Runtime npm audit is clean; three existing build-dependency advisories remain in fast-uri, http-cache-semantics, and undici. These npm copies are development dependencies, not packaged application dependencies. Native Windows/Linux UI testing remains unavailable locally.

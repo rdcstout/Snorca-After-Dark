@@ -14,7 +14,7 @@ The Mac release is Developer ID signed and notarized. The Windows installer is u
 - **[Linux x64 AppImage](https://github.com/rdcstout/Snorca-After-Dark/releases/latest/download/Snorca-After-Dark-Linux-x64.AppImage)**
 - **[Linux Debian/Ubuntu installer](https://github.com/rdcstout/Snorca-After-Dark/releases/latest/download/Snorca-After-Dark-Linux-x64.deb)**
 
-Version **0.3.3** is available for all three platforms. [Linux setup and removal](docs/LINUX.md).
+Version **0.3.4** is available for all three platforms. [Linux setup and removal](docs/LINUX.md).
 
 ## Use
 
