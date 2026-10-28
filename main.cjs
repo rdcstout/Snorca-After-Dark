@@ -1,23 +1,32 @@
 'use strict';
-const {app, BrowserWindow, ipcMain, dialog, shell, Menu} = require('electron');
+const {app, BrowserWindow, ipcMain, dialog, shell, Menu, nativeTheme} = require('electron');
 const path = require('node:path');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const {spawn} = require('node:child_process');
 const {pathToFileURL} = require('node:url');
-const engine = require('./engine.cjs');
+const hostBridge = process.platform==='linux' && process.env.FLATPAK_ID ? require('./linux-host.cjs') : null;
+const engine = hostBridge ? hostBridge.proxy(require('./engine.cjs')) : require('./engine.cjs');
 const {SettingsStore, OperationGate, Diagnostics} = require('./runtime.cjs');
 const {Updates}=require('./updates.cjs');
 const page = pathToFileURL(path.join(__dirname, 'ui', 'index.html')).href;
 app.setName('Snorca After Dark');
+if(nativeTheme)nativeTheme.themeSource='dark';
 if (process.platform === 'win32') app.setAppUserModelId('therapy.extrusion.orca-dark-launcher');
 // Keep the original identity and backup directory across the product rename.
-app.setPath('userData', path.join(app.getPath('appData'), 'orca-dark-launcher'));
+app.setPath('userData', path.join(hostBridge?path.join(os.homedir(),'.config'):app.getPath('appData'), 'orca-dark-launcher'));
 const settings = new SettingsStore(app.getPath('userData'));
 const diagnostics = new Diagnostics(app.getPath('userData'));
 const gate = new OperationGate();
 const linux = process.platform === 'linux' ? require('./linux.cjs') : null;
-const currentTarget = () => linux ? path.join(settings.value.appPath, 'web', 'flutter_web') : path.join(app.getPath('appData'), 'Snapmaker_Orca', 'web', 'flutter_web');
+const currentTarget = async () => {
+  if(linux)return path.join(settings.value.appPath,'web','flutter_web');
+  if(process.platform==='win32' && settings.value.appPath) {
+    const bundle=await engine.appBundle(settings.value.appPath);
+    if(String((await engine.version(bundle)).build_number)==='20261023182959')return bundle;
+  }
+  return path.join(app.getPath('appData'),'Snapmaker_Orca','web','flutter_web');
+};
 const checkRunning = () => engine.isRunning(process.platform, settings.value.appPath);
 let updateService;
 let win, theme, startupNotice = '', stateInFlight, lastState;
@@ -25,20 +34,22 @@ let win, theme, startupNotice = '', stateInFlight, lastState;
 async function recoverLinuxSelection() {
   if(linux && settings.value.appPath && await engine.exists(path.join(settings.folder,'transaction.json'))) {
     if(await checkRunning())throw Error('Close Orca before recovering the interrupted theme operation.');
-    await engine.recover(settings.folder,currentTarget());
+    await engine.recover(settings.folder,await currentTarget());
   }
 }
 async function locate() {
   await recoverLinuxSelection();
+  if (linux) {
+    const candidates = hostBridge ? await hostBridge.request('discover') : await linux.discover();
+    const previous=settings.value.appPath;
+    const selected=candidates.includes(previous)?previous:candidates.length===1?candidates[0]:'';
+    await settings.update({appPath:selected,autoOpen:false});
+    if(candidates.length>1)startupNotice='Multiple Orca installations found. Choose the one you use.';
+    return;
+  }
   if (settings.value.appPath) {
     try { await engine.appBundle(settings.value.appPath); return; }
     catch { startupNotice = 'The saved Orca installation is unavailable. Choose its current location.'; }
-  }
-  if (linux) {
-    const candidates = await linux.discover();
-    await settings.update({appPath:candidates.length === 1 ? candidates[0] : '',autoOpen:false});
-    if(candidates.length > 1) startupNotice = 'Multiple Orca profiles found. Choose the configuration folder for the installation you use.';
-    return;
   }
   const candidates = process.platform === 'darwin'
     ? ['/Applications/Snapmaker Orca.app', '/Applications/Snapmaker_Orca.app', path.join(os.homedir(),'Applications','Snapmaker Orca.app')]
@@ -58,7 +69,9 @@ async function inspectState() {
   if (result.appPath) {
     try {
       const bundle = await engine.appBundle(result.appPath);
-      Object.assign(result, await engine.inspect({bundle,target:currentTarget(),store:settings.folder,theme}));
+      if(process.platform==='darwin' && String((await engine.version(bundle)).build_number)==='20261023182959')throw Error('Orca 2.4.1 is not supported on macOS by this patcher. Nothing changed.');
+      result.directPatch=(await currentTarget())===bundle;
+      Object.assign(result, await engine.inspect({bundle,target:await currentTarget(),store:settings.folder,theme}));
     } catch(error) { result.problem = error.message; }
   }
   try { result.running = await checkRunning(); }
@@ -74,7 +87,8 @@ async function state() {
 async function openOrca() {
   if (linux) throw Error('Open Snapmaker Orca normally after applying. The Linux version does not launch Orca.');
   if (!settings.value.appPath) throw Error('Choose your Snapmaker Orca installation first.');
-  await engine.appBundle(settings.value.appPath);
+  const bundle=await engine.appBundle(settings.value.appPath);
+  if(process.platform==='win32' && (await currentTarget())===bundle)throw Error('Open Orca normally after applying the theme.');
   const isMac = process.platform === 'darwin';
   await new Promise((resolve,reject) => {
     const child = spawn(isMac?'/usr/bin/open':settings.value.appPath, isMac?['-a',settings.value.appPath]:[], {
@@ -89,13 +103,14 @@ async function perform(action) {
     await diagnostics.write('operation.start.' + action);
     try {
       if (action === 'open') { await openOrca(); return {message:'Orca launch requested. No files were changed.'}; }
-      if (linux && !settings.value.appPath) throw Error('Choose your Orca configuration folder first.');
-      if (linux && action === 'launch') throw Error('Use Apply theme, then open Orca normally.');
-      if (action === 'restore') return await engine.restore({target:currentTarget(),store:settings.folder,check:checkRunning});
+      if (linux && !settings.value.appPath) throw Error('Choose your Orca installation first.');
+      if ((linux || (process.platform==='win32' && (await currentTarget())===await engine.appBundle(settings.value.appPath))) && action === 'launch') throw Error('Use Apply theme, then open Orca normally.');
+      if (action === 'restore') return await engine.restore({target:await currentTarget(),store:settings.folder,check:checkRunning});
       if (!['apply','launch'].includes(action)) throw Error('Unknown action.');
       if (!settings.value.appPath) throw Error('Choose your Snapmaker Orca installation first.');
       const bundle = await engine.appBundle(settings.value.appPath);
-      const result = await engine.apply({bundle,target:currentTarget(),store:settings.folder,theme,check:checkRunning});
+      if(process.platform==='darwin' && String((await engine.version(bundle)).build_number)==='20261023182959')throw Error('Orca 2.4.1 is not supported on macOS by this patcher. Nothing changed.');
+      const result = await engine.apply({bundle,target:await currentTarget(),store:settings.folder,theme,check:checkRunning});
       if (action === 'launch') {
         try {await openOrca();} catch(error) {throw Error('The theme was applied, but Orca could not be launched. Open Orca normally. ' + error.message);}
         result.message += ' Orca launch requested.';
@@ -124,7 +139,7 @@ async function start() {
   startupNotice = await settings.load();
   theme = await fs.readFile(path.join(__dirname,'theme.js'),'utf8');
   await locate();
-  updateService=new Updates({settings,config:require('./release-channel.json'),current:app.getVersion(),platform:process.platform,arch:process.arch});
+  updateService=new Updates({settings,config:require('./release-channel.json'),current:app.getVersion(),platform:process.platform,arch:process.arch,format:hostBridge?'flatpak':process.env.APPIMAGE?'AppImage':'deb'});
   win = new BrowserWindow({width:760,height:780,minWidth:620,minHeight:620,title:'Snorca After Dark',backgroundColor:'#12161e',
     webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
   win.webContents.setWindowOpenHandler(() => ({action:'deny'}));
@@ -140,7 +155,7 @@ async function start() {
     authorize(event);
     const canceled = await gate.run(async () => {
       const isWindows = process.platform === 'win32';
-      const choice = await dialog.showOpenDialog(win,{title:linux?'Choose the Snapmaker_Orca configuration folder':isWindows?'Choose the Snapmaker Orca installation folder':'Choose Snapmaker Orca',
+      const choice = await dialog.showOpenDialog(win,{title:linux?'Choose the Snapmaker_Orca resources or configuration folder':isWindows?'Choose the Snapmaker Orca installation folder':'Choose Snapmaker Orca',
         defaultPath:settings.value.appPath?(isWindows?path.dirname(settings.value.appPath):settings.value.appPath):undefined,
         properties:linux||isWindows?['openDirectory']:['openFile','openDirectory'], ...(linux?{defaultPath:settings.value.appPath||os.homedir(),properties:['openDirectory','showHiddenFiles']}:{})});
       if(choice.canceled||!choice.filePaths.length)return true;
@@ -158,7 +173,7 @@ async function start() {
   ipcMain.handle('diagnostics',async event=>{authorize(event);await revealDiagnostics();});
   await win.loadFile(path.join(__dirname,'ui','index.html'));
   if(startupNotice)showNotice(startupNotice);
-  if(!linux&&settings.value.autoOpen&&!startupNotice) {
+  if(!linux&&process.platform!=='win32'&&settings.value.autoOpen&&!startupNotice) {
     try { const result = await perform('launch'); showNotice(result.message); }
     catch(error) {showNotice(error.message);}
   }

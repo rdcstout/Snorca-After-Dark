@@ -4,11 +4,11 @@ const fs=require('node:fs/promises'),path=require('node:path'),os=require('node:
 const {EventEmitter}=require('node:events');
 const E=require('../engine.cjs');
 const source=process.env.ORCA_FIXTURE;
-async function setup(t,{single=true,platform='win32'}={}) {
+async function setup(t,{single=true,platform='win32',fixture=source}={}) {
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'snorca-main-'));t.after(()=>fs.rm(root,{recursive:true,force:true}));
  const install=platform==='linux'?path.join(root,'.config','Snapmaker_Orca'):path.join(root,'programs','Snapmaker Orca'),bundle=path.join(install,...(platform==='linux'?['web','flutter_web']:['resources','web','flutter_web']));
  await fs.mkdir(bundle,{recursive:true});await fs.writeFile(path.join(install,'snapmaker-orca.exe'),'fixture');
- for(const f of [...E.FILES,'version.json']){await fs.mkdir(path.dirname(path.join(bundle,f)),{recursive:true});await fs.copyFile(path.join(source,f),path.join(bundle,f));}
+ for(const f of [...E.FILES,'version.json']){await fs.mkdir(path.dirname(path.join(bundle,f)),{recursive:true});await fs.copyFile(path.join(fixture,f),path.join(bundle,f));}
  const ipc=new Map(),appEvents=new Map();let window,ready,quit=false,pickerOptions;
  const app={getPath:()=>path.join(root,'data'),setPath(){},setName(){},setAppUserModelId(id){assert.equal(id,"therapy.extrusion.orca-dark-launcher");},getVersion:()=> '0.2.0',requestSingleInstanceLock:()=>single,
  on:(event,fn)=>appEvents.set(event,fn),quit(){quit=true;},whenReady:()=>({then(fn){ready=fn();return ready;}})};
@@ -39,4 +39,18 @@ test('Linux IPC detects initialized profile, applies and restores without a laun
  await a.invoke('action','apply');assert.equal((await a.invoke('state')).current,true);
  await assert.rejects(a.invoke('action','launch'),/Apply theme/);
  await a.invoke('action','restore');assert.equal((await a.invoke('state')).patched,false);
+});
+
+const fixture241=process.env.ORCA_241_FIXTURE;
+test('Windows 2.4.1 IPC patches installed resources and preserves stale profile files',{skip:!fixture241},async t=>{
+ const a=await setup(t,{fixture:fixture241});
+ const profile=path.join(a.root,'data','Snapmaker_Orca','web','flutter_web');
+ await fs.mkdir(profile,{recursive:true});await fs.writeFile(path.join(profile,'sentinel'),'keep old override');
+ const before=await E.treeDigest(a.bundle);
+ const state=await a.invoke('state');assert.equal(state.directPatch,true);assert.equal(state.compatible,true);
+ await a.invoke('action','apply');assert.equal((await a.invoke('state')).current,true);
+ await assert.rejects(a.invoke('action','launch'),/Apply theme/);
+ await assert.rejects(a.invoke('action','open'),/Open Orca normally/);
+ await a.invoke('action','restore');assert.equal(await E.treeDigest(a.bundle),before);
+ assert.equal(await fs.readFile(path.join(profile,'sentinel'),'utf8'),'keep old override');
 });

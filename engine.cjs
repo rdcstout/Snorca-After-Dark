@@ -7,6 +7,7 @@ const {promisify} = require('node:util');
 const run = promisify(execFile);
 const hash = data => crypto.createHash('sha256').update(data).digest('hex');
 const V240=require('./web240.cjs');
+const V241=require('./web241.cjs');
 const ICONS=['assets/assets/svgs/device/keyboardArrowDropDown.svg','assets/assets/svgs/device/pause.svg'];
 const FILES = ['index.html','main.dart.js','flutter_bootstrap.js',...ICONS];
 const KNOWN = {
@@ -23,7 +24,7 @@ const WINDOWS_KNOWN = {
  'assets/assets/svgs/device/pause.svg':'c5401c0f93f86ee0976b92a14e74bd2897b3478bd138b6af761e6d56e89e7402',
  'assets/assets/svgs/device/keyboardArrowDropDown.svg':'399efeb691563706d53d2edf14b5b6348255ac63814814d789781961b47ee5a9'
 };
-const isKnown = (file, bytes) => [KNOWN[file], WINDOWS_KNOWN[file], V240.KNOWN[file], V240.WINDOWS_KNOWN[file]].includes(hash(bytes));
+const isKnown = (file, bytes) => [KNOWN[file], WINDOWS_KNOWN[file], V240.KNOWN[file], V240.WINDOWS_KNOWN[file], V241.KNOWN[file]].includes(hash(bytes));
 const MARKER = '.orca-dark-launcher.json';
 const OLD = 'case 0:q.a=q.b=!1\nA.GP("[ThemeVM] toggleTheme, isDark: false, isSystemTheme: false")';
 const NEW = 'case 0:q.a=!1;q.b=(["0","2"].includes(new URLSearchParams(window.location.search).get("path")))\nA.GP("[ThemeVM] Orca Dark Launcher")';
@@ -38,6 +39,7 @@ async function version(dir) {
 async function fileList(dir) {return await exists(path.join(dir,V240.main))?V240.FILES:FILES;}
 async function readFiles(dir) {await safeDir(dir);const out={}; for(const f of await fileList(dir)) {const p=path.join(dir,f);const s=await fs.lstat(p);if(!s.isFile()||s.isSymbolicLink())throw Error('Unexpected web file: '+f);out[f]=await fs.readFile(p);} return out;}
 function patch(original, theme) {
+ if(original[V241.main]&&hash(original[V241.main])===V241.KNOWN[V241.main])return V241.patch(original,theme,hash);
  if(original[V240.main])return V240.patch(original,theme,hash);
  for(const f of FILES) if(!isKnown(f,original[f])) throw Error('This Orca web build is not supported yet (or its files were edited). Nothing changed.');
  let main=original['main.dart.js'].toString().replace(/\r\n/g,'\n');

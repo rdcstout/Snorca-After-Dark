@@ -47,3 +47,15 @@ PR #4 updates Electron 44.3.0 to 44.9.1. Bundled notices were copied byte-for-by
 All 47 tests pass under Node 24 and Electron 44.9.1's runtime using official old/new Orca fixtures. Both PR checks passed before merging. Runtime npm audit is clean; three existing build-dependency advisories remain in fast-uri, http-cache-semantics, and undici. These npm copies are development dependencies, not packaged application dependencies. Native Windows/Linux UI testing remains unavailable locally.
 
 0.3.4 delivery verification: release source d521dcc; GitHub Checks 40510519666 and Linux package job in run 40510519804 passed. Mac and Windows packaged source/notices matched; Mac installation, native picker cancellation and already-applied action verified. Mac notarization accepted and stapled; Gatekeeper passed. All nine uploaded hashes and older/equal update eligibility checked. Final artifacts and detailed local evidence are retained under work/release034 in the development workspace.
+
+## Local 0.3.5 candidates
+
+Linux Orca Flatpak 2.4.1 serves its installed web resources. Detection resolves the current Flatpak deployment instead of trusting the stale profile copy. The existing transaction engine copies and replaces the web directory, preserving OSTree object inodes, verifies exact supported hashes, and saves original files. Printer settings are outside the patch target. Older versions retain the configuration-folder method.
+
+Build Debian on Ubuntu x64 with Node 24: `npm ci`, `npm run check`, then `npm run package:linux -- --config.directories.output=../packages --publish never`. For Flatpak, install `org.freedesktop.Sdk//25.08` and `org.electronjs.Electron2.BaseApp//25.08` from Flathub, then run `npm run package:flatpak -- ../packages/linux-unpacked ../packages`. Use an output directory without an existing Flatpak staging directory.
+
+The Flatpak uses Zypak and a fixed host helper because Flatpak reserves its own installation directories. Both packages share `~/.config/orca-dark-launcher`. The wrapper uses X11/XWayland; user-installed Orca Flatpak 2.4.1 was tested on Ubuntu. System-wide installations requiring privileged writes are not validated.
+
+0.3.5 validation: 52 automated tests passed with all three vendor generations enabled. Windows patching was user-confirmed; Ubuntu Debian and Flatpak apply/restore and Home/Device appearance passed. Final packaged runtime source matched. Public 0.3.4 and candidate 0.3.5 AppImages failed at sandbox startup on Ubuntu 26.04.1. The earlier 0.3.1 launcher automatically disabled its sandbox on that host; AppImage distribution is withdrawn rather than restoring that behavior.
+
+Nothing from Snapmaker's installed web bundle is shipped in these packages. Publication uses only the tested Windows, Debian, and Flatpak artifacts; no modified Orca application is distributed.

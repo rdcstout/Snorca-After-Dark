@@ -1,10 +1,10 @@
 'use strict';
 const semver=require('semver');
 const WEEK=7*24*60*60*1000;
-function eligibleRelease(releases,{repository,current,platform,arch,channel='stable'}) {
+function eligibleRelease(releases,{repository,current,platform,arch,format='AppImage',channel='stable'}) {
  if(!semver.valid(current))throw Error('The installed version cannot be compared.');
  if(!Array.isArray(releases))throw Error('The update service returned invalid data.');
- const suffix=platform==='win32'?`${arch}.exe`:platform==='darwin'?`mac-${arch}.dmg`:platform==='linux'?`linux-${arch}.AppImage`:null;
+ const suffix=platform==='win32'?`${arch}.exe`:platform==='darwin'?`mac-${arch}.dmg`:platform==='linux'?`linux-${arch}.${format}`:null;
  if(!suffix)throw Error('No update package is configured for this platform.');
  const candidates=[];
  for(const release of releases){
@@ -23,7 +23,7 @@ function eligibleRelease(releases,{repository,current,platform,arch,channel='sta
  return semver.gt(newest.version,current)?{status:'available',...newest,message:`Version ${newest.version} is available.`}:{status:'current',message:'You have the latest compatible published version.'};
 }
 class Updates {
- constructor({settings,config,current,platform,arch,fetcher=fetch,now=Date.now}){Object.assign(this,{settings,config,current,platform,arch,fetcher,now});this.pending=null;this.available=null;}
+ constructor({settings,config,current,platform,arch,format,fetcher=fetch,now=Date.now}){Object.assign(this,{settings,config,current,platform,arch,format,fetcher,now});this.pending=null;this.available=null;}
  async check(manual=false){
   if(this.pending){await this.pending;return manual?this.check(true):null;}
   if(!manual&&(!this.settings.value.automaticUpdates||(this.now()>=this.settings.value.lastUpdateAttempt&&this.now()-this.settings.value.lastUpdateAttempt<WEEK)))return null;
@@ -37,7 +37,7 @@ class Updates {
    const response=await this.fetcher(`https://api.github.com/repos/${this.config.repository}/releases?per_page=100`,{headers:{Accept:'application/vnd.github+json'},signal:AbortSignal.timeout(10000)});
    if(!response.ok)throw Error('The update service is unavailable. Try again later.');
    const text=await response.text();if(text.length>2*1024*1024)throw Error('The update response is too large.');
-   const result=eligibleRelease(JSON.parse(text),{...this.config,current:this.current,platform:this.platform,arch:this.arch});
+   const result=eligibleRelease(JSON.parse(text),{...this.config,current:this.current,platform:this.platform,arch:this.arch,format:this.format});
    if(result.status==='available')this.available=result;
    if(manual)return result;
    if(result.status!=='available'||result.version===this.settings.value.dismissedUpdate)return null;

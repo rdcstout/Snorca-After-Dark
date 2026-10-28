@@ -1,6 +1,6 @@
 {
   "name": "orca-dark-launcher",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "private": true,
   "description": "Reversible dark Home and Device pages for Snapmaker Orca",
   "author": "Roger Stout",
@@ -15,8 +15,9 @@
     "verify:package": "node scripts/verify-package.cjs",
     "prestart": "install-electron",
     "prepackage:win": "node scripts/prepare-installer.cjs",
-    "package:linux": "electron-builder --linux AppImage deb --x64",
-    "prepackage:linux": "node scripts/prepare-linux.cjs"
+    "package:linux": "electron-builder --linux dir deb --x64",
+    "prepackage:linux": "node scripts/prepare-linux.cjs",
+    "package:flatpak": "sh scripts/package-flatpak.sh"
   },
   "devDependencies": {
     "electron": "44.9.1",
@@ -40,7 +41,10 @@
       "release-channel.json",
       "LICENSE",
       "linux.cjs",
-      "web240.cjs"
+      "web240.cjs",
+      "web241.cjs",
+      "linux-host.cjs",
+      "linux-helper.cjs"
     ],
     "mac": {
       "category": "public.app-category.utilities",
@@ -55,7 +59,8 @@
     "win": {
       "target": "nsis",
       "icon": "assets/icon.ico",
-      "signExecutable": false
+      "signExecutable": false,
+      "requestedExecutionLevel": "requireAdministrator"
     },
     "artifactName": "Snorca-After-Dark-${version}-${os}-${arch}.${ext}",
     "nsis": {
@@ -76,7 +81,6 @@
     ],
     "linux": {
       "target": [
-        "AppImage",
         "deb"
       ],
       "category": "Utility",

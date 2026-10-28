@@ -15,3 +15,10 @@ test('Linux beta channel finds only compatible Linux packages and compares prere
  assert.equal(eligibleRelease([r],c).status,'available');assert.equal(eligibleRelease([r],{...c,channel:'stable'}).status,'unavailable');
  assert.equal(eligibleRelease([r],{...c,arch:'arm64'}).status,'unavailable');assert.equal(eligibleRelease([r],{...c,current:'0.3.1-beta.2'}).status,'current');
 });
+test('Linux updates stay in the installed deb or Flatpak package format',()=>{
+ for(const format of ['deb','flatpak']) {
+  const r={tag_name:'v1.10.0',assets:[{name:`Snorca-After-Dark-1.10.0-linux-x64.${format}`,browser_download_url:`https://github.com/${config.repository}/releases/download/v1.10.0/app.${format}`}]};
+  assert.equal(eligibleRelease([r],{...config,platform:'linux',format}).status,'available');
+  assert.equal(eligibleRelease([r],{...config,platform:'linux',format:format==='deb'?'flatpak':'deb'}).status,'unavailable');
+ }
+});

@@ -1,6 +1,8 @@
 /* Orca Dark Launcher — skin only; no printer commands or network requests. */
 (() => {
-  if (!['0','2'].includes(new URLSearchParams(location.search).get('path'))) return;
+  const legacyPage = ['0','2'].includes(new URLSearchParams(location.search).get('path'));
+  const currentPage = /^\/web\/flutter_web\/(home|device_control)\/?$/.test(location.pathname);
+  if (!legacyPage && !currentPage) return;
   window.__orcaDarkActive = true;
   const placeholderHashes = new Set([
     '51fe8e06f8b022fbbe67d6795c567f7a775899cc0a9d9ef2790fddc44ae81a53',

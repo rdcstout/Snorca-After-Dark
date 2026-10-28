@@ -22,8 +22,10 @@ jobs:
           /tmp/fixture-tools/bin/pip install dissect.squashfs==1.10 zstandard==0.25.0
           /tmp/fixture-tools/bin/python scripts/linux-fixture.py
           /tmp/fixture-tools/bin/python scripts/vendor240-fixture.py linux
+      - run: python3 scripts/vendor241-fixture.py
       - run: npm test
         env:
+          ORCA_241_FIXTURE: /tmp/snorca-241-windows
           ORCA_FIXTURE: /tmp/snorca-linux-fixture
           ORCA_240_FIXTURE: /tmp/snorca-240-linux
       - run: npm audit --omit=dev
@@ -34,14 +36,12 @@ jobs:
         run: |
           dpkg-deb --info dist-linux/*.deb
           version=$(node -p "require('./package.json').version")
-          cp dist-linux/Snorca-After-Dark-${version}-linux-x64.AppImage dist-linux/Snorca-After-Dark-Linux-x64.AppImage
           cp dist-linux/Snorca-After-Dark-${version}-linux-x64.deb dist-linux/Snorca-After-Dark-Linux-x64.deb
           cd dist-linux
-          sha256sum *.AppImage *.deb > SHA256SUMS.txt
+          sha256sum *.deb > SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
           name: snorca-linux
           path: |
-            dist-linux/*.AppImage
             dist-linux/*.deb
             dist-linux/SHA256SUMS.txt
